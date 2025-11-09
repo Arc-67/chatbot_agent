@@ -8,6 +8,7 @@ from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables import ConfigurableFieldSpec
+from langchain.schema import HumanMessage, AIMessage, SystemMessage
 
 # ------------------------ Imports & API Keys ----------------------------------------------------
 load_dotenv()
@@ -100,7 +101,7 @@ class ConversationSummaryBufferMemory_custom(BaseChatMessageHistory, BaseModel):
 
 # function to get memory for specific session id
 def get_chat_history(session_id: str, llm: ChatOpenAI, k: int = 4) -> ConversationSummaryBufferMemory_custom:
-    print(f"get_chat_history called with session_id={session_id} and k={k}")
+    # print(f"get_chat_history called with session_id={session_id} and k={k}")
     if session_id not in chat_map:
         # if session ID doesn't exist, create a new chat history
         chat_map[session_id] = ConversationSummaryBufferMemory_custom(llm=llm, k=k)
@@ -108,24 +109,107 @@ def get_chat_history(session_id: str, llm: ChatOpenAI, k: int = 4) -> Conversati
     return chat_map[session_id]
 
 
+# Prints Conversation History
+def print_history(session_id: str):
+    print("\n=== Conversation history ===")
+    history = chat_map.get(session_id)
 
-def main():
-    # chat_map["id_k6"].clear()  # clear the history
+    if history is None:
+        print("(no history)")
+        return
+    
+    for msg in history.messages:
+        if isinstance(msg, HumanMessage):
+            role_label = "Human"
+        elif isinstance(msg, AIMessage):
+            role_label = "AI"
+        elif isinstance(msg, SystemMessage):
+            role_label = "System (Summary)"
+        else:
+            role_label = msg.__class__.__name__  # fallback to type name
+
+        content = getattr(msg, "content", str(msg))
+        print(f"\n{role_label}: {content}")
+    
+    print("============================\n")
+
+
+
+def happy_path(session_id: str = "session_id", k: int = 6):
+    # ensure a fresh session
+    if session_id in chat_map:
+        chat_map[session_id].clear()
+    else:
+        # ensure memory object exists
+        get_chat_history(session_id, llm=llm, k=k)
+
+    print("\n ******** Happy Path ********")
+
     for i, msg in enumerate([
         "Hi, my name is James Potter",
-        "I'm researching the different types of conversational memory.",
-        "I have been looking at ConversationBufferMemory and ConversationBufferWindowMemory.",
-        "Buffer memory just stores the entire conversation",
-        "Buffer window memory stores the last k messages, dropping the rest.",
+        "I'm looking for a starbucks branch.",
+        "The branch I am currently looking at is in Subang Jaya.",
+        "This branch opens at 8am",
         "What is my name again?"
     ]):
         print(f"---\nMessage {i+1}\n---\n")
         pipeline_with_history.invoke(
             {"query": msg},
-            config={"session_id": "id_k6", "llm": llm, "k": 6}
+            config={"session_id": session_id, "llm": llm, "k": k}
         )
 
-    print(chat_map["id_k6"].messages)
+    print_history(session_id = session_id)
+
+
+def idk_path(session_id: str = "session_id", k: int = 6):
+    # ensure a fresh session
+    if session_id in chat_map:
+        chat_map[session_id].clear()
+    else:
+        # ensure memory object exists
+        get_chat_history(session_id, llm=llm, k=k)
+
+    print("\n ******** IDK Path ********")
+
+    for i, msg in enumerate([
+        "Hi, my name is James Potter",
+        "I'm looking for a starbucks branch.",
+        "By the way, is there an outlet in Subang Jaya?",
+        "What's the opening time for the outlet in Subang Jaya?"
+    ]):
+        print(f"---\nMessage {i+1}\n---\n")
+        pipeline_with_history.invoke(
+            {"query": msg},
+            config={"session_id": session_id, "llm": llm, "k": k}
+        )
+
+    print_history(session_id = session_id)
+
+
+def interrupted_path(session_id: str = "session_id", k: int = 6):
+    # ensure a fresh session
+    if session_id in chat_map:
+        chat_map[session_id].clear()
+    else:
+        # ensure memory object exists
+        get_chat_history(session_id, llm=llm, k=k)
+
+    print("\n ******** Interrupted Path ********")
+
+    for i, msg in enumerate([
+        "Hi, my name is James Potter",
+        "I'm looking for a starbucks branch.",
+        "The branch I am currently looking at is in Subang Jaya. This branch opens at 8am",
+        "Also, do you ship internationally?",    # interruption (assistant should answer)
+        "Sorry the branch in Subang Jaya. What's the opening time?"
+    ]):
+        print(f"---\nMessage {i+1}\n---\n")
+        pipeline_with_history.invoke(
+            {"query": msg},
+            config={"session_id": session_id, "llm": llm, "k": k}
+        )
+
+    print_history(session_id = session_id)
 
 
 
@@ -188,4 +272,11 @@ if __name__ == '__main__':
         ]
     )
 
-    main()
+    # Output Happy Path test results
+    happy_path(session_id = "id_happy", k = 6)
+
+    # Output IDK Path test results
+    idk_path(session_id = "id_idk", k = 6)
+
+    # Output Interrupted Path test results
+    interrupted_path(session_id = "id_interrupted", k = 6)
