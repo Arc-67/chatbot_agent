@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Chat</title>
+    <!-- Use the Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Based on your SCSS preference, this is written in a nested-like, clean CSS structure */
+        
+        :root {
+            --brand-color: #007bff;
+            --brand-light: #e6f2ff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #555;
+            --border-color: #e0e0e0;
+            --bg-light: #f0f2f5;
+            --bg-white: #ffffff;
+            --bg-user-message: #007bff;
+            --bg-bot-message: #f1f1f1;
+            --bg-bot-step: #f8f9fa;
+        }
+
+        /* 1. Global Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 2. Main Chat Container */
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            max-height: 900px;
+            background-color: var(--bg-white);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        /* 3. Chat Header */
+        .chat-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .chat-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .chat-header button {
+            background: #ffebeb;
+            color: #d90429;
+            border: 1px solid #f0b6bd;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .chat-header button:hover {
+            background: #fadadd;
+        }
+
+        /* 4. Message List */
+        .message-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            /* Scroll to bottom smoothly */
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            display: flex;
+            gap: 0.75rem;
+            max-width: 85%;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .avatar.user {
+            background-color: var(--brand-light);
+            color: var(--brand-color);
+        }
+
+        .avatar.bot {
+            background-color: #e0e0e0;
+            color: #555;
+        }
+        
+        .avatar.system {
+            background-color: #fffbe6;
+            color: #f59e0b;
+        }
+
+        .message-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .message-content .author {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .message-content p {
+            line-height: 1.6;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+        }
+        
+        .message-content p:empty {
+            display: none;
+        }
+
+        .message-content .timestamp {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+        
+        /* Message Alignment */
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message.user .message-content {
+            align-items: flex-end;
+        }
+
+        .message.user p {
+            background-color: var(--bg-user-message);
+            color: var(--bg-white);
+            border-bottom-right-radius: 0;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+        }
+        
+        .message.bot .message-content {
+            align-items: flex-start;
+        }
+
+        .message.bot p {
+            background-color: var(--bg-bot-message);
+            color: var(--text-primary);
+            border-bottom-left-radius: 0;
+        }
+        
+        .message.system {
+            align-self: center;
+            max-width: 100%;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .message.system .avatar {
+            font-size: 1.2rem;
+        }
+
+        /* 5. Agent Step Visualization */
+        .agent-steps {
+            width: 100%;
+            margin-top: 0.5rem;
+            border-left: 3px solid var(--brand-color);
+            padding-left: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--bg-bot-step);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .step .tool-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            color: var(--text-secondary);
+        }
+
+        .step .step-name {
+            font-weight: 600;
+            color: var(--brand-color);
+        }
+
+        .step pre {
+            font-family: 'Menlo', 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin-left: auto;
+            /* Allow breaking long JSON args */
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        /* 6. Composer (Input Form) */
+        .composer-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .chat-composer {
+            display: flex;
+            align-items: flex-end;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-white);
+        }
+
+        .chat-composer textarea {
+            flex-grow: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            resize: none;
+            /* Start at 1 line, grow up to 6 */
+            line-height: 1.5;
+            max-height: calc(1.5rem * 6 + 1.5rem); /* 6 lines */
+            overflow-y: auto;
+            transition: border-color 0.2s;
+        }
+
+        .chat-composer textarea:focus {
+            outline: none;
+            border-color: var(--brand-color);
+            box-shadow: 0 0 0 2px var(--brand-light);
+        }
+
+        .chat-composer button {
+            background-color: var(--brand-color);
+            border: none;
+            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 0.75rem;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chat-composer button:hover {
+            background-color: #0056b3;
+        }
+
+        .chat-composer button svg {
+            color: white;
+            width: 24px;
+            height: 24px;
+        }
+        
+        /* 7. Autocomplete Box */
+        .autocomplete-box {
+            display: none; /* Hidden by default */
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            width: 100%;
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+            z-index: 10;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        
+        .autocomplete-item {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+        }
+        
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background-color: var(--bg-light);
+        }
+        
+        .autocomplete-item strong {
+            color: var(--brand-color);
+        }
+        
+        .autocomplete-item span {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-left: 0.5rem;
+        }
+        
+        /* 8. Utility Classes */
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--brand-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <!-- Header -->
+        <div class="chat-header">
+            <h3>AI Agent</h3>
+            <button id="reset-button" title="Reset Conversation">Clear Messages</button>
+        </div>
+        
+        <!-- Message List -->
+        <div class="message-list" id="message-list">
+            <!-- Messages will be dynamically added here -->
+        </div>
+
+        <!-- Autocomplete Box -->
+        <div class="composer-container">
+            <div class="autocomplete-box" id="autocomplete-box">
+                <!-- Autocomplete items will be dynamically added here -->
+            </div>
+            
+            <!-- Composer / Input Form -->
+            <form class="chat-composer" id="chat-form">
+                <textarea 
+                    id="message-input" 
+                    placeholder="Ask about products, outlets, or help you solve a calculation ..." 
+                    rows="1"
+                ></textarea>
+                <button type="submit" id="send-button" title="Send Message">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tool Icon SVG (for steps) -->
+    <svg width="0" height="0" style="display:none;">
+        <symbol id="icon-tool" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" d="M12 6.75a5.25 5.25 0 0 1 5.25 5.25c0 2.12-1.294 3.93-3.148 4.757a.75.75 0 0 1-.944-.476 3.75 3.75 0 0 0-5.316 0 .75.75 0 0 1-.944.476C5.044 15.93 3.75 14.12 3.75 12A5.25 5.25 0 0 1 9 6.75v.038a.75.75 0 0 1 .43.29L10.5 8.25H7.5a.75.75 0 0 0 0 1.5h4.879a.75.75 0 0 1 .65.363l.5 1.0c.09.18.14.375.14.587v.08a.75.75 0 0 1-1.5 0v-.08c0-.02-.004-.04-.012-.06l-.5-1.0a2.25 2.25 0 0 0-1.95-.99H7.5a.75.75 0 0 1 0-1.5h3l-1.07-1.172a2.25 2.25 0 0 0-1.5-.678H9a3.75 3.75 0 1 0 3.75 3.75.75.75 0 0 1 1.5 0A5.25 5.25 0 0 1 9 6.75v.038ZM12 18a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" clip-rule="evenodd" />
+            <path d="M11.64 16.532a.75.75 0 0 1 .41-1.037 3.75 3.75 0 0 0 4.634-4.116.75.75 0 0 1 .9-.806 5.25 5.25 0 0 1-6.48 5.76.75.75 0 0 1-.464.2Z" />
+        </symbol>
+    </svg>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // --- 1. DOM Elements ---
+            const messageList = document.getElementById("message-list");
+            const chatForm = document.getElementById("chat-form");
+            const messageInput = document.getElementById("message-input");
+            const sendButton = document.getElementById("send-button");
+            const resetButton = document.getElementById("reset-button");
+            const autocompleteBox = document.getElementById("autocomplete-box");
+
+            // --- 2. State & Config ---
+            let messages = []; // stores chat history
+            const SESSION_ID = "session_" + Date.now();
+            const BACKEND_URL = "http://127.0.0.1:8000/invoke";
+            const QUICK_ACTIONS = [
+                { command: "/calc", description: "Ask a math question. e.g., /calc (5+5)*2" },
+                { command: "/products", description: "Find drinkware. e.g., /products find mugs" },
+                { command: "/outlets", description: "Find ZUS outlets. e.g., /outlets stores in KL" },
+                { command: "/reset", description: "Reset the conversation" }
+            ];
+            let autocompleteIndex = -1;
+            
+            // --- 3. Core Functions ---
+            const scrollToBottom = () => {
+                messageList.scrollTop = messageList.scrollHeight;
+            };
+
+            /**
+             * Renders a single message object to the DOM.
+             */
+            function renderMessage(message) {
+                // System messages are simple
+                if(message.role === "system") {
+                    const systemMsg = document.createElement("div");
+                    systemMsg.className = "message system";
+                    systemMsg.innerHTML = `
+                        <div class="avatar system">ℹ️</div>
+                        <div class="message-content">
+                            <p>${message.content}</p>
+                        </div>
+                    `;
+                    messageList.appendChild(systemMsg);
+                    return;
+                }
+
+                // General message setup
+                const msgDiv = document.createElement("div");
+                msgDiv.className = `message ${message.role}`;
+                msgDiv.id = `msg-${message.id}`;
+                const avatarChar = message.role === 'user' ? 'You' : 'AI';
+
+                if (message.role === 'user') {
+                    // --- USER MESSAGE ---
+                    // This is simple, it does NOT get the steps/answer containers.
+                    msgDiv.innerHTML = `
+                        <div class="avatar user">You</div>
+                        <div class="message-content">
+                            <span class="author">You</span>
+                            <p>${message.finalAnswer}</p>
+                            <span class="timestamp">${message.timestamp}</span>
+                        </div>
+                    `;
+                } else {
+                    // --- BOT MESSAGE ---
+                    // This one *does* get the containers for steps and the final answer.
+                    msgDiv.innerHTML = `
+                        <div class="avatar bot">AI</div>
+                        <div class="message-content">
+                            <span class="author">AI Agent</span>
+                            <div class="agent-steps" id="steps-${message.id}"></div>
+                            <p id="final-answer-${message.id}"></p>
+                            <span class="timestamp">${message.timestamp}</span>
+                        </div>
+                    `;
+                    
+                    // Now, get the containers we just created
+                    const finalAnswerP = msgDiv.querySelector(`#final-answer-${message.id}`);
+                    const stepsContainer = msgDiv.querySelector(`#steps-${message.id}`);
+
+                    // Render any steps that already exist (from localStorage)
+                    if (message.steps && message.steps.length > 0) {
+                        message.steps.forEach(step => {
+                            stepsContainer.appendChild(createStepElement(step.name, step.args));
+                        });
+                    }
+                    
+                    // Render the final answer if it exists (from localStorage)
+                    if (message.finalAnswer) {
+                        finalAnswerP.textContent = message.finalAnswer;
+                    } else {
+                        // If there's no final answer, show the spinner
+                        finalAnswerP.innerHTML = '<div class="loading-spinner"></div>';
+                    }
+                }
+
+                messageList.appendChild(msgDiv);
+                scrollToBottom();
+            }
+            
+            /**
+             * Creates a single agent step visualization element.
+             */
+            function createStepElement(name, args) {
+                const stepDiv = document.createElement("div");
+                stepDiv.className = "step";
+                
+                let argsPretty = args;
+                try {
+                    // Try to format the JSON args
+                    const argsObj = JSON.parse(args);
+                    argsPretty = JSON.stringify(argsObj, null, 2);
+                } catch(e) {
+                    // It's not valid JSON, just show the raw string
+                    argsPretty = args;
+                }
+                
+                stepDiv.innerHTML = `
+                    <svg class="tool-icon" viewBox="0 0 24 24"><use href="#icon-tool"></use></svg>
+                    <span class="step-name">${name}</span>
+                    <pre>${argsPretty}</pre>
+                `;
+                return stepDiv;
+            }
+
+            /**
+             * Adds a message to the state and renders it.
+             */
+            function addMessage(content, role) {
+                const timestamp = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                const messageData = {
+                    id: Date.now(),
+                    content: content,
+                    role: role,
+                    timestamp: timestamp,
+                    steps: [],
+                    finalAnswer: ""
+                };
+                
+                if(role === 'user') {
+                    // User message is simple, no final answer/steps
+                    messageData.finalAnswer = content;
+                }
+                
+                messages.push(messageData);
+                renderMessage(messageData);
+                return messageData; // Return the created message data
+            }
+
+            /**
+             * Saves the current chat history to localStorage.
+             */
+            function saveChatHistory() {
+                localStorage.setItem("chatHistory", JSON.stringify(messages));
+            }
+
+            /**
+             * Loads chat history from localStorage on page load.
+             */
+            function loadChatHistory() {
+                const history = localStorage.getItem("chatHistory");
+                if (history) {
+                    messages = JSON.parse(history);
+                    messages.forEach(msg => renderMessage(msg));
+                } else {
+                    // Add a welcome message if no history
+                    addMessage("Hello! Ask me something about products, outlets, or a calculation.", "bot");
+                    // This is a "final" answer, so we update it
+                    messages[0].finalAnswer = "Hello! Ask me something about products, outlets, or a calculation.";
+                    saveChatHistory();
+                }
+            }
+            
+            /**
+             * Handles the chat form submission.
+             */
+            async function handleSubmit(e) {
+                e.preventDefault();
+                const text = messageInput.value.trim();
+                
+                if (!text) return;
+                
+                // Handle /reset command
+                if (text === "/reset") {
+                    handleReset();
+                    return;
+                }
+
+                // Add user message
+                addMessage(text, "user");
+                saveChatHistory(); // Save the user's message
+
+                // Clear input and hide autocomplete
+                messageInput.value = "";
+                messageInput.style.height = 'auto'; // Reset height
+                hideAutocomplete();
+                
+                // Create bot message shell
+                const botMessageData = addMessage("", "bot");
+                
+                // Stream the agent response
+                await streamAgentResponse(text, botMessageData);
+            }
+            
+            /**
+             * Handles the streaming response from the backend.
+             */
+            async function streamAgentResponse(text, botMessageData) {
+                const stepsContainer = document.getElementById(`steps-${botMessageData.id}`);
+                const finalAnswerP = document.getElementById(`final-answer-${botMessageData.id}`);
+                
+                try {
+                    console.log("[Fetch] Making request to:", `${BACKEND_URL}?content=${encodeURIComponent(text)}&session_id=${SESSION_ID}`);
+                    const response = await fetch(`${BACKEND_URL}?content=${encodeURIComponent(text)}&session_id=${SESSION_ID}`, {
+                        method: "POST"
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = ""; // Buffer to hold incomplete chunks
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) {
+                            console.log("[Fetch] Stream finished.");
+                            break;
+                        }
+
+                        buffer += decoder.decode(value, { stream: true });
+                        console.log("[Fetch] Buffer:", JSON.stringify(buffer)); // Debug: See the raw stream buffer
+                        
+                        // We only process the buffer when we see the closing </step> tag
+                        const stepEndIndex = buffer.indexOf("</step>");
+                        if (stepEndIndex === -1) {
+                            // No closing tag yet, wait for more data
+                            continue;
+                        }
+                        
+                        // We found a complete block of steps
+                        let block = buffer.substring(0, stepEndIndex);
+                        buffer = buffer.substring(stepEndIndex + 7); // Consume the block
+                        
+                        console.log("[Parse] Processing block:", JSON.stringify(block));
+                        
+                        // Now, we loop *inside* this block to find all <step> tags
+                        // This regex finds all instances of <step_name>...</step_name>{...}
+                        const stepRegex = /<step_name>(.*?)<\/step_name>({.*?})/g;
+                        let match;
+                        
+                        while ((match = stepRegex.exec(block)) !== null) {
+                            const stepName = match[1];
+                            const args = match[2];
+                            
+                            console.log(`[Parse] Found Step: ${stepName}, Args: ${args}`);
+                            
+                            try {
+                                // Test if args is valid JSON (it should be)
+                                const argsObj = JSON.parse(args);
+                                
+                                if (stepName === "final_answer") {
+                                    console.log("[Parse] Found final answer.");
+                                    botMessageData.finalAnswer = argsObj.answer;
+                                    finalAnswerP.textContent = argsObj.answer;
+                                } else {
+                                    // It's a tool call, visualize it
+                                    console.log("[Parse] Adding tool step:", stepName);
+                                    stepsContainer.appendChild(createStepElement(stepName, args));
+                                    botMessageData.steps.push({ name: stepName, args: args });
+                                }
+
+                            } catch (e) {
+                                console.warn(`[Parse] Skipping malformed JSON for step ${stepName}:`, e, args);
+                            }
+                        }
+                    } // end of outer while(true) loop
+
+                } catch (error) {
+                    console.error("Streaming error:", error);
+                    finalAnswerP.textContent = `Error: ${error.message}. Please try again.`;
+                    botMessageData.finalAnswer = `Error: ${error.message}. Please try again.`;
+                }
+                
+                // Final save after stream is complete
+                console.log("[Fetch] Removing spinner, saving history.");
+                finalAnswerP.querySelector('.loading-spinner')?.remove();
+                saveChatHistory();
+            }
+
+            /**
+             * Handles the /reset command.
+             */
+            function handleReset() {
+                messages = [];
+                localStorage.removeItem("chatHistory");
+                messageList.innerHTML = "";
+                addMessage("Conversation reset.", "system");
+                saveChatHistory(); // Save the reset state
+                messageInput.value = "";
+            }
+
+            /**
+             * Handles keyboard events in the textarea.
+             */
+            function handleKeydown(e) {
+                // Handle Enter to send, Shift+Enter for newline
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if(autocompleteBox.style.display === 'block') {
+                        // If autocomplete is open, select the item
+                        const selected = autocompleteBox.querySelector('.selected');
+                        if(selected) {
+                            selectAutocomplete(selected.dataset.action);
+                        } else {
+                            chatForm.requestSubmit();
+                        }
+                    } else {
+                        chatForm.requestSubmit();
+                    }
+                }
+                
+                // Handle autocomplete keyboard navigation
+                if (autocompleteBox.style.display === 'block') {
+                    const items = autocompleteBox.querySelectorAll('.autocomplete-item');
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        autocompleteIndex = (autocompleteIndex + 1) % items.length;
+                        updateAutocompleteSelection(items);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        autocompleteIndex = (autocompleteIndex - 1 + items.length) % items.length;
+                        updateAutocompleteSelection(items);
+                    } else if (e.key === 'Tab' || e.key === 'Escape') {
+                        hideAutocomplete();
+                    }
+                }
+            }
+            
+            /**
+             * Handles the input event for resizing textarea and showing autocomplete.
+             */
+            function handleInput(e) {
+                // Auto-resize textarea
+                const textarea = e.target;
+                textarea.style.height = 'auto'; // Reset height
+                textarea.style.height = `${textarea.scrollHeight}px`;
+                
+                // Autocomplete logic
+                const text = textarea.value;
+                if (text.startsWith('/')) {
+                    const query = text.substring(1).toLowerCase();
+                    const filteredActions = QUICK_ACTIONS.filter(action => 
+                        action.command.substring(1).startsWith(query)
+                    );
+                    showAutocomplete(filteredActions);
+                } else {
+                    hideAutocomplete();
+                }
+            }
+            
+            function showAutocomplete(actions) {
+                if (actions.length === 0) {
+                    hideAutocomplete();
+                    return;
+                }
+                autocompleteBox.style.display = 'block';
+                autocompleteBox.innerHTML = actions.map((action, index) => `
+                    <div class="autocomplete-item ${index === 0 ? 'selected' : ''}" data-action="${action.command}">
+                        <strong>${action.command}</strong>
+                        <span>- ${action.description}</span>
+                    </div>
+                `).join('');
+                autocompleteIndex = 0;
+            }
+            
+            function hideAutocomplete() {
+                autocompleteBox.style.display = 'none';
+                autocompleteIndex = -1;
+            }
+            
+            function updateAutocompleteSelection(items) {
+                items.forEach((item, index) => {
+                    item.classList.toggle('selected', index === autocompleteIndex);
+                });
+            }
+            
+            function selectAutocomplete(action) {
+                messageInput.value = action + " ";
+                hideAutocomplete();
+                messageInput.focus();
+            }
+
+            // --- 4. Event Listeners ---
+            chatForm.addEventListener("submit", handleSubmit);
+            resetButton.addEventListener("click", () => {
+                messageInput.value = "/reset";
+                chatForm.requestSubmit();
+            });
+            
+            messageInput.addEventListener("keydown", handleKeydown);
+            messageInput.addEventListener("input", handleInput);
+            
+            // Handle clicking on an autocomplete item
+            autocompleteBox.addEventListener("click", e => {
+                const item = e.target.closest('.autocomplete-item');
+                if (item) {
+                    selectAutocomplete(item.dataset.action);
+                }
+            });
+
+            // --- 5. Initial Load ---
+            loadChatHistory();
+        });
+    </script>
+</body>
+</html>

@@ -165,6 +165,15 @@ def get_chat_history(session_id: str, llm: ChatOpenAI, k: int = 4) -> Conversati
     # remove anything beyond the last
     return chat_map[session_id]
 
+def clear_all_history():
+    """
+    Clears the in-memory chat history map.
+    This is called by a background task in main.py to prevent memory leaks.
+    """
+    print("--- Clearing all chat histories... ---")
+    chat_map.clear()
+    print("--- Chat history cleared. ---")
+
 chat_map = {}
 llm_memory = ChatOpenAI(temperature=0.0, model="gpt-4.1-nano")
 
@@ -342,6 +351,7 @@ class QueueCallbackHandler(AsyncCallbackHandler):
         # so we must only send the "done" signal if we have already seen the final_answer
 
         if self.final_answer_seen:
+            self.queue.put_nowait("<<STEP_END>>")
             self.queue.put_nowait("<<DONE>>")
         else:
             self.queue.put_nowait("<<STEP_END>>")
