@@ -10,7 +10,7 @@ import asyncio
 from typing import Any, Union, Optional
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Query, status
+from fastapi import FastAPI, Query, status, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -114,13 +114,18 @@ async def token_generator(
 
 # invoke AT Agent function
 @app.post("/invoke", status_code=status.HTTP_202_ACCEPTED) #
-async def invoke(content: str, session_id: str = "test_1"):
+async def invoke(content: str,
+                 session_id: str = "test_1",
+                 test_error: bool = Query(False, description="Set to true to simulate a 500 error")):
     """
     Invoves LLM Agent with tools:
     1. calculator tools
     2. /product enpoint as a tool
     3.
     """
+    if test_error:
+        print("--- SIMULATING HTTP 500 ERROR (/invoke) ---")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Simulated Internal Server Error for /invoke.")
 
     queue: asyncio.Queue = asyncio.Queue()
     streamer = QueueCallbackHandler(queue)
@@ -141,11 +146,20 @@ async def invoke(content: str, session_id: str = "test_1"):
 
 # products endpoint
 @app.get("/products", status_code=status.HTTP_200_OK) #
-async def get_product_summary(query: str = Query(..., min_length=3, description="Query for product summary")):
+async def get_product_summary(query: str = Query(..., min_length=3, description="Query for product summary"),
+                              test_error: bool = Query(False, description="Set to true to simulate a 500 error")):
     """
     Retrieves top-k product documents and returns an AI-generated summary.
     This is a non-streaming, simple JSON endpoint.
     """
+    
+    if test_error:
+        print("--- SIMULATING HTTP 500 ERROR (/products) ---")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Simulated Internal Server Error for /products.")
+
+    if not qa_chain:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Product RAG chain is not available.")
+
     try:
         # Use 'ainvoke' for an asynchronous call
         result = await qa_chain.ainvoke({"query": query})
@@ -162,12 +176,21 @@ async def get_product_summary(query: str = Query(..., min_length=3, description=
     
 
 @app.get("/outlets")
-async def get_outlet_info(query: str = Query(..., min_length=3, description="Natural language query for ZUS outlets")):
+async def get_outlet_info(
+    query: str = Query(..., min_length=3, description="Natural language query for ZUS outlets"),
+    test_error: bool = Query(False, description="Set to true to simulate a 500 error")):
     """
     Translates a natural language query to SQL, executes it against
     the ZUS outlet database, and returns the results.
     """
     print(f"--- Received /outlets query: {query} ---")
+
+    # --- THIS IS THE NEW TEST CODE ---
+    if test_error:
+        print("--- SIMULATING HTTP 500 ERROR ---")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Simulated Internal Server Error for testing.")
+    # --- END OF TEST CODE ---
+
     try:
         # Use 'ainvoke' to call the agent asynchronously
         # The agent will handle figuring out which tool to call.

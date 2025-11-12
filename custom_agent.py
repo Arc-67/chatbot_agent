@@ -44,19 +44,19 @@ When you have enough information (from tool results), you *must* call the 'final
 
 Guidelines:
 1. Use only chat history or tool results and never invent or assume facts. 
-2. If information is missing, ask one short clarifying question.
-3. If the user changes topic or interrupts, handle it naturally and retain relevant context.
-4. Be concise, factual, and context-aware.
-5. When resuming after an interruption, reuse past context only if relevant.
-6. When exucting a calculation think step by step and take note of rules of arithmetic order of operations especially Parentheses:
-Arithmetic Order of Operations:
-    1. Parentheses: " ( " , " ) "
-    2. Exponentiation: " ^ " , " ** "
-    3. Multiplication and division: " * " , " / "
-    4. Addition and subtraction: " + " , " - "
+2. Be concise, factual, and context-aware.
+3. If information is missing, ask one short clarifying question.
+4. If the user changes topic or interrupts, handle it naturally and retain relevant context.
+5. For math problems, you must solve them by breaking them down into multiple, single steps using your calculator tools.
 
 Your goal is to respond clearly by first selecting the correct tool, and finally call the 'final_answer' tool with the complete solution.
 """
+
+# Arithmetic Order of Operations:
+#     1. Parentheses: " ( " , " ) "
+#     2. Exponentiation: " ^ " , " ** "
+#     3. Multiplication and division: " * " , " / "
+#     4. Addition and subtraction: " + " , " - "
 
 prompt = ChatPromptTemplate.from_messages([
     ("system", system_prompt),
@@ -213,11 +213,17 @@ async def query_product_catalog(query: str) -> str:
     """
     # print(f"--- Calling Product Tool with query: {query} ---")
     try:
+        # This new dictionary forces the server to fail
+        # test_params = {
+        #     "query": query,
+        #     "test_error": True 
+        # }
+
         # Use httpx.AsyncClient for async requests
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 PRODUCT_API_URL,
-                params={"query": query},
+                params={"query": query}, #  test_params
                 timeout=10.0  # Add a 10-second timeout
             )
         
@@ -230,6 +236,11 @@ async def query_product_catalog(query: str) -> str:
         # Return the summary, or a fallback message
         return data.get("summary", "No summary was returned from the product catalog.")
 
+    except httpx.HTTPStatusError as e:
+        # This catches 500 errors from the server
+        print(f"HTTP Status Error: {e.response.status_code}")
+        return f"Error: The outlet catalog service is temporarily down (HTTP {e.response.status_code}). Please try again later."
+    
     except httpx.RequestError as e:
         print(f"HTTP Request Error: {e}")
         return f"Error: Could not connect to the product catalog: {str(e)}"
@@ -247,11 +258,17 @@ async def query_outlet_catalog(query: str) -> str:
     """
     print(f"--- Calling Outlet Tool with query: {query} ---")
     try:
+        # This new dictionary forces the server to fail
+        # test_params = {
+        #     "query": query,
+        #     "test_error": True 
+        # }
+
         # Use httpx.AsyncClient for async requests
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 OUTLET_API_URL,
-                params={"query": query},
+                params={"query": query}, # test_params
                 timeout=10.0  # Add a 10-second timeout
             )
         
@@ -261,9 +278,15 @@ async def query_outlet_catalog(query: str) -> str:
         # Note: The /outlets endpoint returns "result"
         return data.get("result", "No result was returned from the outlet catalog.")
 
+    except httpx.HTTPStatusError as e:
+        # This catches 500 errors from the server
+        print(f"HTTP Status Error: {e.response.status_code}")
+        return f"Error: The outlet catalog service is temporarily down (HTTP {e.response.status_code}). Please try again later."
+    
     except httpx.RequestError as e:
         print(f"HTTP Request Error: {e}")
         return f"Error: Could not connect to the outlet catalog: {str(e)}"
+    
     except Exception as e:
         print(f"Outlet Tool Error: {e}")
         return f"An unexpected error occurred while querying outlets: {str(e)}"

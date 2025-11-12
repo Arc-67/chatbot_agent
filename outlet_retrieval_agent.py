@@ -185,7 +185,7 @@ agent = create_tool_calling_agent(llm, tools, prompt)
 sql_agent_executor = AgentExecutor(
     agent=agent, 
     tools=tools, 
-    verbose=True,
+    verbose=False,
     max_iterations=5,
     # It allows the agent to return the tool's output directly to the user as the final answer.
     return_intermediate_steps=False 
