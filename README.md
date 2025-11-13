@@ -141,14 +141,14 @@ uvicorn main:app --reload
 
 On the very first run, the server will detect if the database is empty and automatically populate its ``zus_outlets.db`` file from ``outlets.jsonl``.
 
-*How to Use*
+#### How to Use
 
 1. Once the server is running, open your browser and go to:
 [Link text Here](http://127.0.0.1:8000)
 
 2. The chat interface will load. You can now test all of the agent's capabilities.
 
-*Example Queries to Try:*
+#### Example Queries to Try:
 
 - *Simple Chat:* ``Hello, my name is James Potter?``
 
