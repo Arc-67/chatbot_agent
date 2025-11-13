@@ -4,9 +4,11 @@ This is a full-stack AI chat application featuring a multi-agent backend built w
 
 The application is built on an "agent-of-agents" architecture. A primary "orchestrator" agent (/invoke) fields user requests and intelligently delegates tasks to specialized sub-agents and tools, which are exposed as internal API endpoints:
 
-1. ****Product Agent (``/products``):**** A Retrieval-Augmented Generation (RAG) agent that connects to a Pinecone vector database to find and summarize ZUS Coffee drinkware products.
+1. **Orchestrator Agent (``/invoke``):** A General LLM Agent that processes user queries and  and intelligently delegates tasks to sub-agents and tools.
 
-2. ****Outlet Agent (``/outlets``):**** A secure Text-to-SQL agent that connects to a local SQLite database to answer questions about ZUS Coffee outlet locations.
+2. **Product Agent (``/products``):** A Retrieval-Augmented Generation (RAG) agent that connects to a Pinecone vector database to find and summarize ZUS Coffee drinkware products.
+
+3. **Outlet Agent (``/outlets``):** A secure Text-to-SQL agent that connects to a local SQLite database to answer questions about ZUS Coffee outlet locations.
 
 The frontend chat interface visualizes this entire process, showing the agent's "thoughts" and tool calls in real-time as they happen.
 
