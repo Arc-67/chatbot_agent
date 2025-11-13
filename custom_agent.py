@@ -20,7 +20,7 @@ from langchain_openai import ChatOpenAI
 # ------------------------ LLM & Prompt ----------------------------------------------------
 # LLM and Prompt Setup
 llm_agent = ChatOpenAI(
-    model="gpt-4.1-nano",
+    model="gpt-4.1-mini",
     temperature=0.0,
     streaming=True,
 ).configurable_fields(
