@@ -11,8 +11,8 @@ from typing import Any, Union, Optional
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Query, status, HTTPException
-from fastapi.responses import StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse, FileResponse
+# from fastapi.middleware.cors import CORSMiddleware
 
 from langchain_core.messages import BaseMessage
 
@@ -69,16 +69,16 @@ async def lifespan(app: FastAPI):
 # initilizing our application
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",      # Original origin (maybe for a React app)
-        "http://127.0.0.1:5500"       # Your new HTML file's origin
-    ],  # Your frontend URL
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=[
+#         "http://localhost:3000",      # Original origin (maybe for a React app)
+#         "http://127.0.0.1:5500"       # Your new HTML file's origin
+#     ],  # Your frontend URL
+#     allow_credentials=True,
+#     allow_methods=["*"],  # Allows all methods
+#     allow_headers=["*"],  # Allows all headers
+# )
 
 # streaming function
 async def token_generator(
@@ -226,5 +226,9 @@ async def get_outlet_info(
         return {"error": f"An error occurred: {str(e)}"}
     
 @app.get("/")
-async def root():
-    return {"message": "AI Agent Server is running."}
+async def get_index():
+    """
+    Serves the main chat application HTML file.
+    """
+    # Assumes 'ai_chatbot.html' is in the same directory as 'main.py'
+    return FileResponse("ai_chatbot.html", media_type="text/html")

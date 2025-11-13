@@ -427,7 +427,7 @@
             // --- 2. State & Config ---
             let messages = []; // stores chat history
             const SESSION_ID = "session_" + Date.now();
-            const BACKEND_URL = "http://127.0.0.1:8000/invoke";
+            const BACKEND_URL = "/invoke";
             const QUICK_ACTIONS = [
                 { command: "/calc", description: "Ask a math question. e.g., /calc (5+5)*2" },
                 { command: "/products", description: "Find drinkware. e.g., /products find mugs" },
@@ -578,11 +578,25 @@
                     messages = JSON.parse(history);
                     messages.forEach(msg => renderMessage(msg));
                 } else {
-                    // Add a welcome message if no history
-                    addMessage("Hello! Ask me something about products, outlets, or a calculation.", "bot");
-                    // This is a "final" answer, so we update it
-                    messages[0].finalAnswer = "Hello! Ask me something about products, outlets, or a calculation.";
+                    // --- START OF FIX ---
+                    // Don't use addMessage() here, as it creates an
+                    // incomplete message. Create the full object manually.
+                    const welcomeMessage = {
+                        id: Date.now(),
+                        content: "Hello! Ask me something about products, outlets, or a calculation.",
+                        role: "bot",
+                        timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+                        steps: [],
+                        finalAnswer: "Hello! Ask me something about products, outlets, or a calculation." // The text is set *before* rendering
+                    };
+                    
+                    // 1. Add the complete message to our state
+                    messages.push(welcomeMessage);
+                    // 2. Render the complete message (no spinner)
+                    renderMessage(welcomeMessage);
+                    // 3. Save the complete message to history
                     saveChatHistory();
+                    // --- END OF FIX ---
                 }
             }
             

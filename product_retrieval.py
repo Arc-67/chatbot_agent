@@ -3,7 +3,6 @@ from langchain_pinecone import PineconeVectorStore
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 
-
 # --------- Initialize OpenAI embedding and LLM ----------
 # Set the K-value for "top-k"
 TOP_K = 3
