@@ -1,4 +1,11 @@
+# .gitignore
 .env
 __pycache__
 .pytest_cache
 **.docx
+
+venv/
+__pycache__/
+*.pyc
+*.db
+*.db-journal
