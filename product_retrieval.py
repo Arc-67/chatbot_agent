@@ -1,7 +1,17 @@
+import os
+from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_pinecone import PineconeVectorStore
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
+
+# --- Load Environment Variables ---
+load_dotenv()
+# Set index name
+INDEX_NAME = os.environ.get("PINECONE_INDEX_NAME")
+
+if not INDEX_NAME:
+    raise RuntimeError("PINECONE_INDEX_NAME must be set in your .env file")
 
 # --------- Initialize OpenAI embedding and LLM ----------
 # Set the K-value for "top-k"
@@ -14,15 +24,18 @@ embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 llm = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
 
 # ---------- load vector store index object ----------
-# Set your index name
-INDEX_NAME = "mind-hive-test" 
-
 # Connect to your existing Pinecone index
-docsearch = PineconeVectorStore.from_existing_index(
-    index_name=INDEX_NAME,
-    embedding=embeddings,
-    text_key="text"
-)
+try:
+    print(f"Connecting to Pinecone index: '{INDEX_NAME}'...")
+    docsearch = PineconeVectorStore.from_existing_index(
+        index_name=INDEX_NAME,
+        embedding=embeddings,
+        text_key="text"
+    )
+    print("Pinecone connection successful.")
+except Exception as e:
+    print(f"CRITICAL ERROR: Failed to connect to Pinecone index '{INDEX_NAME}': {e}")
+    docsearch = None
 
 # ---------- Setup custom prompt ----------
 # Define the custom prompt for summarizing
