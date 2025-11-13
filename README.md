@@ -4,45 +4,47 @@ This is a full-stack AI chat application featuring a multi-agent backend built w
 
 The application is built on an "agent-of-agents" architecture. A primary "orchestrator" agent (/invoke) fields user requests and intelligently delegates tasks to specialized sub-agents and tools, which are exposed as internal API endpoints:
 
-1. *Product Agent (``/products``):* A Retrieval-Augmented Generation (RAG) agent that connects to a Pinecone vector database to find and summarize ZUS Coffee drinkware products.
+1. **Orchestrator Agent (``/invoke``):** A General LLM Agent that processes user queries and  and intelligently delegates tasks to sub-agents and tools.
 
-2. *Outlet Agent (``/outlets``):* A secure Text-to-SQL agent that connects to a local SQLite database to answer questions about ZUS Coffee outlet locations.
+2. **Product Agent (``/products``):** A Retrieval-Augmented Generation (RAG) agent that connects to a Pinecone vector database to find and summarize ZUS Coffee drinkware products.
+
+3. **Outlet Agent (``/outlets``):** A secure Text-to-SQL agent that connects to a local SQLite database to answer questions about ZUS Coffee outlet locations.
 
 The frontend chat interface visualizes this entire process, showing the agent's "thoughts" and tool calls in real-time as they happen.
 
 # Features
 
-- *Multi-Agent Backend:* A main orchestrator agent that routes tasks to specialized RAG and Text-to-SQL agents.
+- **Multi-Agent Backend:** A main orchestrator agent that routes tasks to specialized RAG and Text-to-SQL agents.
 
-- *Real-time Streaming:* The main chat interface streams the agent's actions and final answer token-by-token.
+- **Real-time Streaming:** The main chat interface streams the agent's actions and final answer token-by-token.
 
-- *Agentic Visualization:* The UI renders the agent's internal tool calls (e.g., ``query_outlet_catalog``, ``add``, ``multiply``) as distinct "steps" in the chat.
+- **Agentic Visualization:** The UI renders the agent's internal tool calls (e.g., ``query_outlet_catalog``, ``add``, ``multiply``) as distinct "steps" in the chat.
 
-- *Secure Text-to-SQL:* The ``/outlets`` agent uses a tool-based system, not raw SQL generation, to completely prevent SQL injection vulnerabilities.
+- **Secure Text-to-SQL:** The ``/outlets`` agent uses a tool-based system, not raw SQL generation, to completely prevent SQL injection vulnerabilities.
 
-- *Data Persistence:* The chat history is saved to ``localStorage``, so conversations are not lost on browser refresh.
+- **Data Persistence:** The chat history is saved to ``localStorage``, so conversations are not lost on browser refresh.
 
-- *Self-Healing Database:* The server automatically creates and populates its SQLite database from a JSONL file on its first run.
+- **Self-Healing Database:** The server automatically creates and populates its SQLite database from a JSONL file on its first run.
 
-- *Downtime Testing:* Endpoints include a ``test_error=true`` flag to safely test and verify the agent's "unhappy path" and error handling.
+- **Downtime Testing:** Endpoints include a ``test_error=true`` flag to safely test and verify the agent's "unhappy path" and error handling.
 
 # Tech Stack
 
 ### Backend:
 
-- *FastAPI:* For the main web server and API endpoints.
+- **FastAPI:** For the main web server and API endpoints.
 
-- *LangChain:* For building all AI agents, prompts, and tool-calling logic.
+- **LangChain:** For building all AI agents, prompts, and tool-calling logic.
 
-- *SQLAlchemy:* For the ORM and connection to the SQLite database.
+- **SQLAlchemy:** For the ORM and connection to the SQLite database.
 
-- *SQLite:* For the ZUS Coffee outlet database.
+- **SQLite:** For the ZUS Coffee outlet database.
 
-- *Pinecone:* For the product vector database.
+- **Pinecone:** For the product vector database.
 
-- *httpx:* For agent-to-agent (endpoint) communication.
+- **httpx:** For agent-to-agent (endpoint) communication.
 
-- *Uvicorn:* As the ASGI server to run FastAPI.
+- **Uvicorn:** As the ASGI server to run FastAPI.
 
 ### Frontend:
 
@@ -111,7 +113,7 @@ This project expects you to create the Pinecone index manually. The ingestion sc
 
 1. Log in to your Pinecone account.
 
-2. Go to *Indexes* and click *Create Index*.
+2. Go to **Indexes** and click **Create Index**.
 
 3. Set the Index Name to match the ``PINECONE_INDEX_NAME`` from your ``.env`` file (e.g., ``products``).
 
@@ -141,24 +143,24 @@ uvicorn main:app --reload
 
 On the very first run, the server will detect if the database is empty and automatically populate its ``zus_outlets.db`` file from ``outlets.jsonl``.
 
-*How to Use*
+**How to Use**
 
 1. Once the server is running, open your browser and go to:
 [Link text Here](http://127.0.0.1:8000)
 
 2. The chat interface will load. You can now test all of the agent's capabilities.
 
-*Example Queries to Try:*
+**Example Queries to Try:**
 
-- *Simple Chat:* ``Hello, my name is James Potter?``
+- **Simple Chat:** ``Hello, my name is James Potter?``
 
-- *Calculator (Multi-Step):* ``/calc (10 + 5) * 2`` or ``(10 + 5) * 2``
+- **Calculator (Multi-Step):** ``/calc (10 + 5) * 2`` or ``(10 + 5) * 2``
 
-- *Product RAG Agent:* ``/products what kind of drinkware do you have?`` or ``what kind of drinkware do you have?`` 
+- **Product RAG Agent:** ``/products what kind of drinkware do you have?`` or ``what kind of drinkware do you have?`` 
 
-- *Text-to-SQL Agent:* ``/outlets show me outlets in Petaling Jaya`` or ``show me outlets in Petaling Jaya``
+- **Text-to-SQL Agent:** ``/outlets show me outlets in Petaling Jaya`` or ``show me outlets in Petaling Jaya``
 
-- *Reset Chat:* click the *Clear Chat* button or enter ``/reset``
+- **Reset Chat:** click the **Clear Chat** button or enter ``/reset``
 
 # Project File Structure
 
