@@ -8,7 +8,10 @@ The application is built on an "agent-of-agents" architecture. A primary "orches
 
 2. **Outlet Agent (``/outlets``):** A secure Text-to-SQL agent that connects to a local SQLite database to answer questions about ZUS Coffee outlet locations.
 
-The frontend chat interface visualizes this entire process, showing the agent's "thoughts" and tool calls in real-time as they happen. This is the link to the deployed demo: [Demo Link](https://chatbot-agent-cb3y.onrender.com) Note that due to deploying on a free tier, the application goes to sleep after 15 minutes of inactivity. So it may take a few minutes to starup again.
+The frontend chat interface visualizes this entire process, showing the agent's "thoughts" and tool calls in real-time as they happen. 
+
+This is the link to the deployed demo: [Demo Link](https://chatbot-agent-cb3y.onrender.com) 
+Note that due to deploying on a free tier, the application goes to sleep after 15 minutes of inactivity. So it may take a few minutes to starup again.
 
 # Features
 
